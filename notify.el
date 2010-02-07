@@ -4,6 +4,7 @@
 
 ;; Original Author: Mark A. Hershberger <mhersberger@intrahealth.org>
 ;; Keywords: extensions, convenience, lisp
+;; Version: 0.1
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -22,10 +23,14 @@
 
 ;;; Commentary:
 
-;; This provides a single function, notify, that will produce a notify
+;; This provides a single function, `notify', that will produce a notify
 ;; pop-up via DBus.
 
 ;;; Code:
+
+(defgroup notify nil
+  "Notification system using native operating system."
+  :group 'external)
 
 (defvar notify-last '(0 0 0))
 
@@ -44,7 +49,10 @@
 
 ;; We could set up other notification methods like notify-via-shell or
 ;; notify-via-pointer
-(defvar notify-method 'notify-via-dbus)
+(defcustom notify-method 'notify-via-dbus
+  "The method to use to dispatch the notification"
+  :group 'notify
+  :type 'function)
 
 (defun notify-next-id ()
   "Return the next notification id."
@@ -66,6 +74,7 @@
                       '(:array :signature "{sv}")
                       ':int32 (get 'params :timeout))))
 
+;;;###autoload
 (defun notify (title body &rest args)
   "Use pop-up notifications for events."
   (when (and
@@ -79,20 +88,20 @@
 (defun keywords-to-properties (symbol args &optional defaults)
   "Convert a list in the form (:keywordA valueA
                                :keywordB valueB ...)
-to a list of propertys with the given values"
+to a list of properties with the given values"
   (when (car-safe defaults)  ; probably need to avoid recursion
     (keywords-to-properties symbol defaults))
   (while args
-      (let ((arg (car args)))
-	(setq args (cdr args))
-	(unless (symbolp arg)
-	  (error "Junk in args %S" args))
-	(let ((keyword arg)
-	      (value (car args)))
-	  (unless args
-	    (error "Keyword %s is missing an argument" keyword))
-	  (setq args (cdr args))
-          (put symbol keyword value)))))
+    (let ((arg (car args)))
+      (setq args (cdr args))
+      (unless (symbolp arg)
+        (error "Junk in args %S" args))
+      (let ((keyword arg)
+            (value (car args)))
+        (unless args
+          (error "Keyword %s is missing an argument" keyword))
+        (setq args (cdr args))
+        (put symbol keyword value)))))
 
 (provide 'notify)
 
